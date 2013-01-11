@@ -1,7 +1,7 @@
 #!/usr/bin/php5
 <?php
 /**
- * Director Gnome
+ * Market Gnome
  *
  * Copyright (c) 2012-2012, Barney Garrett.
  * All rights reserved.
@@ -40,7 +40,7 @@
 error_reporting(E_ALL ^ E_NOTICE);
 
 $config = parse_ini_file("mg.ini", true);
-
+$ignore_list = explode(',',$config['ignore_list']['list']);
 
 // initialize JAXL object with initial config
 
@@ -79,7 +79,7 @@ $client->add_cb('on_auth_failure', function($reason) {
 });
 
 $client->add_cb('on_chat_message',function($stanza) {
-	global $client,$config;
+	global $client,$config,$ignore_list;
 	$pdo = new PDO("mysql:host=".$config['mysql']['host'].";dbname=".$config['mysql']['db_name'], $config['mysql']['user'], $config['mysql']['password']);
 	$item_sql = $pdo->prepare('select typeID from invTypes where typeName = :tn');
 	$system_sql = $pdo->prepare('select itemID from mapDenormalize where solarSystemID is NULL and typeID = 5 and itemName = :in');
@@ -88,13 +88,10 @@ $client->add_cb('on_chat_message',function($stanza) {
 	$client->get_roster();
 	
 	$from=preg_replace('/\/.*$/', '', $stanza->from);
-
-	if((strlen($stanza->body) > 0) && ($from!='director_gnome@lawnalliance.org')) {
+	if((strlen($stanza->body) > 0) && (!in_array($from,$ignore_list))) {
 		// echo back the incoming message
 		
-		$fp = fopen('/home/barney/Market_Gnome/requests.txt', 'a');
-		fwrite($fp, $stanza->body."\n");
-		$request = explode ( ':' , $stanza->body);
+		$request = explode ( '$' , $stanza->body);
 		$rc = count($request);
 		$reqest_type = '';
 		$typeID = '';
@@ -122,7 +119,7 @@ $client->add_cb('on_chat_message',function($stanza) {
 				}
 				if ($icount != 1)
 				{
-					$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name:System Name\n";
+					$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name\$System Name\n";
 					if ($icount == 0)
 					{
 						$message .= "The specified Item was not found\n";
@@ -155,14 +152,14 @@ $client->add_cb('on_chat_message',function($stanza) {
 				}
 				if (($icount != 1) || ($scount != 1))
 				{
-					$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name:System Name\n";
+					$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name\$System Name\n";
 					if ($icount == 0)
 					{
 						$message .= "The specified Item was not found\n";
 					}
 					if ($scount ==0)
 					{
-						$message .= "The specified System was not found\nIf you have entered a Region name the format is Item Name:R:Region Name\n";
+						$message .= "The specified System was not found\nIf you have entered a Region name the format is Item Name\$R\$Region Name\n";
 					}
 					$invalid = true;
 				}
@@ -174,7 +171,7 @@ $client->add_cb('on_chat_message',function($stanza) {
 				$type = trim($request[1]);
 				if (strlen($loc) === 1)
 				{
-					$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name:R:System Name\n";
+					$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name\$R\$System Name\n";
 					$message .= "The request type should be the 2nd parameter\n";
 					Break;
 				}
@@ -202,7 +199,7 @@ $client->add_cb('on_chat_message',function($stanza) {
 						}
 						if (($icount != 1) || ($scount != 1))
 						{
-							$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name:System Name\n";
+							$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name\$System Name\n";
 							if ($icount == 0)
 							{
 								$message .= "The specified Item was not found\n";
@@ -217,13 +214,13 @@ $client->add_cb('on_chat_message',function($stanza) {
 						Break;
 					default:
 						
-						$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name:System Name\n";
+						$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name\$System Name\n";
 						$message .= "Sorry that request type was not understood\n";
 						Break;
 				}
 				Break;					
 			default:
-				$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name:System Name\n";
+				$message = "**** Thank you for your request " . $from . " ****\nThere was an error with your request Format is Item Name\$System Name\n";
 				$message .= "Sorry the wrong number of parameters was supplied\n";
 				Break;
 		}
@@ -248,8 +245,6 @@ $client->add_cb('on_chat_message',function($stanza) {
 			$message = "**** Thank you for your request " . $from . " ****\nItem = " . $item . "\nLocation = " . $locationName . "\nPrice = " . $price . "\nLast updated : " . $updated ."\n";
 		}
 				
-		fwrite($fp, $message."\n");
-		fclose($fp);
 		$msg = new XMPPMsg(array('type'=>'chat', 'to'=>$stanza->from, 'from'=>$stanza->to), $message);
 		$client->send($msg);
 	}
