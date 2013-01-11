@@ -1,5 +1,21 @@
-LAWN Alliance's Market Bot.
+Market Bot.
 
-Uses JAXL v3 : https://github.com/abhinavsingh/JAXL/tree/v3.x
+Requirements :
+PHP
+JAXL v3 : https://github.com/abhinavsingh/JAXL/tree/v3.x
+Mysql DB with invTypes and mapDenormalize tables from the CCP DataDump.
 
-Configure authentication using mg.ini example given in mg_example.ini
+Configure using mg.ini example given in mg_example.ini
+
+Running : 
+Modify example_start_market to point to the full path of your app.
+run start_market.sh every minute using a cronjob.
+
+Use :
+Start a chat with your Market Bot JID and send him ItemName$SystemName and He'll send you back the Lowest Sell price of that Item in that System according to eve-marketdata. ;)
+
+Get a region wide price using : ItemName$R$SystemName
+
+A price of 0.00 probably means there are no sell orders (at least that have been uploaded to Eve-marketdata).
+
+NB: Prices are only as accurate as the information in eve-marketdata.
