@@ -78,6 +78,11 @@ $client->add_cb('on_auth_failure', function($reason) {
 	echo "got on_auth_failure cb with reason $reason\n";
 });
 
+$client->add_cb('on_presence_stanza', function($stanza) {
+	global $client;
+	// do nothing with presence stanza's
+});
+
 $client->add_cb('on_chat_message',function($stanza) {
 	global $client,$config,$ignore_list;
 
